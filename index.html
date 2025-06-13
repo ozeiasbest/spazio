@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dados da Google Sheets API com Busca</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            margin: auto;
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+        }
+        #search-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #search-input {
+            width: 80%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        #data-container {
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .item {
+            background-color: #e9ecef;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            line-height: 1.6;
+        }
+        .item strong {
+            color: #007bff;
+        }
+        .error-message {
+            color: red;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+      <center><h1>- Condomínio Spazio -</h1></center>
+        <div id="search-container">
+            <input type="text" id="search-input" placeholder="Buscar por bloco, nome, placa, etc...">
+        </div>
+        <div id="data-container">
+            <p>Carregando dados...</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const api_url = 'https://api.zerosheets.com/v1/wksn';
+            const dataContainer = document.getElementById('data-container');
+            const searchInput = document.getElementById('search-input');
+            let allData = []; // Armazenar todos os dados para filtragem
+
+            async function fetchData() {
+                try {
+                    const response = await fetch(api_url);
+
+                    if (!response.ok) {
+                        throw new Error(`Erro HTTP! Status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    allData = data; // Guarda a cópia completa dos dados
+                    displayData(allData); // Exibe todos os dados inicialmente
+                } catch (error) {
+                    console.error('Erro ao buscar os dados:', error);
+                    dataContainer.innerHTML = `<p class="error-message">Erro ao carregar os dados: ${error.message}. Por favor, verifique a URL da API ou sua conexão.</p>`;
+                }
+            }
+
+            function displayData(itemsToDisplay) {
+                dataContainer.innerHTML = ''; // Limpa o conteúdo atual
+
+                if (itemsToDisplay && itemsToDisplay.length > 0) {
+                    itemsToDisplay.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.classList.add('item');
+
+                        // --- Mapeamento dos campos da sua planilha (VERIFIQUE OS NOMES DAS CHAVES!) ---
+                        // Ajuste os nomes dentro dos colchetes [] ou após o 'item.'
+                        // para corresponderem EXATAMENTE aos nomes das colunas no JSON da sua API.
+                        // Exemplo: se no seu JSON a chave for "BLOCO E APTO", use item["BLOCO E APTO"]
+                        const blocoApt = item["BLOCO e APT"] || item["Bloco e Apt"] || item.BLOCOEAPT || 'N/A';
+                        const nomes = item["Nomes"] || item.Nomes || 'N/A';
+                        const placa = item["PLACA CARRO - MODELO 🚘"] || item["Placa"] || item.PLACA_CARRO_MODELO || 'N/A';
+                        const carroModelo = item["Carro - modelo 🚘"] || item["Modelo Carro"] || item.MODELO_CARRO || 'N/A';
+                        const adesivoIdentificacao = item["ADESIVO DE IDENTIFICAÇÃO"] || item["Adesivo Identificacao"] || item.ADESIVO_IDENTIFICACAO || 'N/A';
+                        const observacoes = item["Observações 📋"] || item["Observacoes Gerais"] || item.OBSERVACOES || 'N/A';
+                        const telefone = item["Telefone 📞"] || item["Telefone de Contato"] || item.TELEFONE || 'N/A';
+                        const obsVagasAlugadas = item["OBS VAGAS ALUGADAS"] || item["Vagas Alugadas Observacoes"] || item.OBS_VAGAS_ALUGADAS || 'N/A';
+
+                        // --- Construção do texto agrupado e filtragem de campos vazios ---
+                        const fields = [
+                            { label: "BLOCO e APT", value: blocoApt },
+                            { label: "Nomes", value: nomes },
+                            { label: "Placa", value: placa },
+                            { label: "Carro - modelo 🚘", value: carroModelo },
+                            { label: "ADESIVO DE IDENTIFICAÇÃO", value: adesivoIdentificacao },
+                            { label: "Observações 📋", value: observacoes },
+                            { label: "Telefone 📞", value: telefone },
+                            { label: "OBS VAGAS ALUGADAS", value: obsVagasAlugadas }
+                        ];
+
+                        let formattedText = '';
+                        fields.forEach(field => {
+                            // Só adiciona a linha se o valor não for vazio, nulo, 'N/A' ou apenas espaços em branco
+                            if (field.value && field.value !== 'N/A' && String(field.value).trim() !== '') {
+                                formattedText += `<strong>${field.label}:</strong> ${field.value}<br>`;
+                            }
+                        });
+
+                        itemDiv.innerHTML = formattedText;
+                        dataContainer.appendChild(itemDiv);
+                    });
+                } else {
+                    dataContainer.innerHTML = '<p>Nenhum resultado encontrado para a busca.</p>';
+                }
+            }
+
+            // Função para filtrar os dados com base no input de busca
+            function filterData() {
+                const searchTerm = searchInput.value.toLowerCase(); // Converte para minúsculas para busca case-insensitive
+
+                const filteredItems = allData.filter(item => {
+                    // Converte cada valor do item para string e minúsculas para comparar
+                    // Você pode ajustar quais campos devem ser pesquisáveis aqui
+                    for (const key in item) {
+                        if (item.hasOwnProperty(key) && key !== '_lineNumber') { // Ignora _lineNumber na busca
+                            const value = String(item[key]).toLowerCase();
+                            if (value.includes(searchTerm)) {
+                                return true; // Encontrou o termo de busca neste item
+                            }
+                        }
+                    }
+                    return false; // Não encontrou o termo de busca neste item
+                });
+
+                displayData(filteredItems); // Exibe os itens filtrados
+            }
+
+            // Adiciona um "listener" para o evento 'input' (cada vez que você digita)
+            searchInput.addEventListener('input', filterData);
+
+            // Carrega os dados quando a página é carregada
+            fetchData();
+        });
+    </script>
+</body>
+</html>
