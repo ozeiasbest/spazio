@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Condomínio Spazio </title>
+    <title>Condomínio Spazio</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -100,10 +100,7 @@
                         const itemDiv = document.createElement('div');
                         itemDiv.classList.add('item');
 
-                        // --- Mapeamento dos campos da sua planilha (VERIFIQUE OS NOMES DAS CHAVES!) ---
-                        // Ajuste os nomes dentro dos colchetes [] ou após o 'item.'
-                        // para corresponderem EXATAMENTE aos nomes das colunas no JSON da sua API.
-                        // Exemplo: se no seu JSON a chave for "BLOCO E APTO", use item["BLOCO E APTO"]
+                        
                         const blocoApt = item["BLOCO e APT"] || item["Bloco e Apt"] || item.BLOCOEAPT || 'N/A';
                         const nomes = item["Nomes"] || item.Nomes || 'N/A';
                         const placa = item["PLACA CARRO - MODELO 🚘"] || item["Placa"] || item.PLACA_CARRO_MODELO || 'N/A';
